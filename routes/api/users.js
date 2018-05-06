@@ -4,22 +4,25 @@ const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const keys = require("../../config/keys");
-
+const passport = require("passport");
 
 // Load User model
 const User = require("../../models/User");
 
-// @route GET api/users/test
-// @desc Test users route
-// @access Public
+/*
+ * @route GET api/users/test
+ * @desc Test users route
+ * @access Public
+*/
 router.get("/test", 
   (req, res) => res.json(
   { msg: "Users work" }));
 
- 
-// @route  GET api/users/register
-// @desc   Register user
-// @access Public
+/* 
+ * route  GET api/users/register
+ * desc   Register user
+ * access Public
+*/
 router.post("/register", (req, res) => { 
   User.findOne({ email: req.body.email })
   .then(user => {
@@ -52,13 +55,14 @@ router.post("/register", (req, res) => {
   });
 });
 
-// @route  GET api/users/login
-// @desc   Login user / Returning Token
-// @access Public
+/*
+ * route  GET api/users/login
+ * desc   Login user / Returning Token
+ * access Public
+ */
 router.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
   // Find user by email
   User.findOne({email})
     .then(user => {
@@ -67,20 +71,16 @@ router.post("/login", (req, res) => {
           email: "User not found"
         });     
       }
-
       // Check Password
       bcrypt.compare(password, user.password)
         .then(isMatch => {
-          if(isMatch) {
-            // res.json({msg: "Success"});
+          if(isMatch) { // res.json({msg: "Success"});
             // User Method
-
             const payload = {
               id: user.id,
               name: user.name,
               avatar: user.avatar
             }; // Create JWT payload
-
             // Sign Token
             jwt.sign(
               payload, 
@@ -97,6 +97,21 @@ router.post("/login", (req, res) => {
               password: "Password incorrect"});
           }
         });
+    });
+});
+
+/* 
+ * @route  GET api/users/current
+ * @desc   Return current user
+ * @access Private
+*/
+router.get("/current", passport.authenticate("jwt", 
+  { session: false }), 
+  (req, res) => {
+    res.json({
+      id: req.user.id,
+      name: req.user.name,
+      email: req.user.email
     });
 });
 
